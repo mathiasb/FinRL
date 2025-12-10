@@ -1,85 +1,81 @@
 import pandas as pd
 import numpy as np
 import os
+import sys
+
+# Add the root directory to sys.path to ensure we can import finrl
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+
 from finrl.meta.data_processors.processor_yahoofinance import YahooFinanceProcessor
 
-# Configuration
-TRAIN_START_DATE = '2021-01-01'
-TRAIN_END_DATE = '2022-12-31'
-TIME_INTERVAL = '1D'
-# Yahoo Finance Tickers:
-# EURUSD=X: Euro / US Dollar
-# GBPUSD=X: British Pound / US Dollar
-# JPY=X: US Dollar / Japanese Yen (Note: Inverted quote compared to EUR/GBP)
-# SEK=X: US Dollar / Swedish Krona (Note: Inverted quote)
-TICKER_LIST = ['EURUSD=X', 'GBPUSD=X', 'JPY=X', 'SEK=X']
-
-TECHNICAL_INDICATORS_LIST = [
-    "macd",
-    "rsi_30",
-    "cci_30",
-    "dx_30",
-    "boll_ub",
-    "boll_lb"
-]
-
 def main():
-    print(f"Starting DataOps Phase 1...")
-    print(f"Tickers: {TICKER_LIST}")
-    print(f"Range: {TRAIN_START_DATE} to {TRAIN_END_DATE}")
-
-    # 1. Download Data
-    dp = YahooFinanceProcessor()
-    df = dp.download_data(
-        start_date=TRAIN_START_DATE,
-        end_date=TRAIN_END_DATE,
-        ticker_list=TICKER_LIST,
-        time_interval=TIME_INTERVAL
-    )
+    # 1. Define Tickers
+    # tickers = ['EURUSD=X', 'GBPUSD=X', 'JPY=X', 'SEK=X']
+    # NOTE: JPY=X in Yahoo Finance is typically USD/JPY. SEK=X is USD/SEK.
+    tickers = ['EURUSD=X', 'GBPUSD=X', 'JPY=X', 'SEK=X']
     
-    print(f"Data Downloaded. Shape: {df.shape}")
-    print(df.head())
+    start_date = '2021-01-01'
+    end_date = '2023-01-01' # Include 2022 fully
+    time_interval = '1D'
+    
+    print(f"Fetching data for {tickers} from {start_date} to {end_date}...")
 
-    # 2. Clean Data
-    df = dp.clean_data(df)
-    print(f"Data Cleaned. Shape: {df.shape}")
-
+    # 2. Fetch Data
+    p = YahooFinanceProcessor()
+    
+    # download_data returns the dataframe
+    df = p.download_data(ticker_list=tickers, 
+                         start_date=start_date, 
+                         end_date=end_date, 
+                         time_interval=time_interval)
+    
+    # clean_data takes df and returns df
+    df = p.clean_data(df)
+    
     # 3. Feature Engineering
-    print("Adding Technical Indicators...")
-    df = dp.add_technical_indicator(df, TECHNICAL_INDICATORS_LIST)
-    print(f"Features Added. Shape: {df.shape}")
-    print(df.head())
-
+    print("Adding technical indicators...")
+    technical_indicators = ['macd', 'rsi_30', 'cci_30', 'dx_30', 'boll_ub', 'boll_lb']
+    
+    # add_technical_indicator takes df
+    df = p.add_technical_indicator(data=df, tech_indicator_list=technical_indicators)
+    
+    # p.dataframe is NOT used/stored in the processor class based on inspection, we use the local df variable
+    # df = p.dataframe # REMOVED
+    
     # 4. Normalization (Log Returns)
-    # We calculate log returns for the 'close' price to make the data stationary
-    # However, for the environment, we usually feed the raw features + returns.
-    # The PRD requested "Returns-based normalization".
-    # We will add a 'log_return' column.
+    print("Computing log returns and normalization...")
     
-    # Sort to ensure shift works correctly
-    df = df.sort_values(['tic', 'timestamp'])
+    # We need to compute log returns for the 'close' price.
+    # However, the dataframe structure from FinRL usually has columns like 'tic', 'date', 'close', etc.
+    # We need to process per ticker.
     
-    # Calculate Log Returns per ticker
-    df['log_return'] = df.groupby('tic')['close'].apply(
-        lambda x: np.log(x / x.shift(1))
-    ).reset_index(level=0, drop=True)
-
-    # Drop the first row of each ticker which will be NaN
-    df = df.dropna()
-    print(f"NaNs dropped. Final Shape: {df.shape}")
-
-    # 5. Save to Parquet
-    output_dir = 'data'
-    if not os.path.exists(output_dir):
-        os.makedirs(output_dir)
+    normalized_dfs = []
     
-    output_path = os.path.join(output_dir, 'fx_data_2021_2022.parquet')
-    df.to_parquet(output_path)
-    print(f"Data saved to {output_path}")
-
-    # Verification
-    print("\nVerification:")
-    print(df.groupby('tic')['timestamp'].count())
+    for ticker in tickers:
+        temp_df = df[df['tic'] == ticker].copy()
+        temp_df.sort_values('date', inplace=True)
+        
+        # Log Returns: ln(close_t / close_{t-1})
+        # We can implement this as np.log(temp_df['close']) - np.log(temp_df['close'].shift(1))
+        # equivalent to np.log(temp_df['close'] / temp_df['close'].shift(1))
+        
+        temp_df['log_return'] = np.log(temp_df['close'] / temp_df['close'].shift(1))
+        
+        # Drop NaNs created by shifting
+        temp_df.dropna(inplace=True)
+        
+        normalized_dfs.append(temp_df)
+    
+    final_df = pd.concat(normalized_dfs)
+    
+    # 5. Save
+    output_path = 'data/fx_data_2021_2022.parquet'
+    print(f"Saving data to {output_path}...")
+    final_df.to_parquet(output_path)
+    
+    print("DataOps pipeline completed successfully.")
+    print(f"Shape: {final_df.shape}")
+    print(final_df.head())
 
 if __name__ == "__main__":
     main()
