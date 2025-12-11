@@ -49,14 +49,14 @@
     - [x] Setup `pre-commit` hooks (Manual step managed by user/repo settings).
 
 ## Phase 4: Agent Training (TDD)
-- [ ] **Setup Agent Class**
-    - [ ] Create `finrl/agents/fx_agent.py`.
-    - [ ] TDD: Test Agent initialization (wraps PPO).
-    - [ ] Config: Hyperparameters.
-- [ ] **Training Loop**
-    - [ ] TDD: Test `train_model()` saves artifacts.
-    - [ ] Integration: Train on `fx_data_2021_2022.parquet`.
-- [ ] **Evaluation**
-    - [ ] TDD: Test `predict()` / `trade()`.
-    - [ ] Backtest on hold-out data (split from 2022).
-    - [ ] Calculate Sharpe Ratio.
+- [x] **Setup Agent Class**
+    - [x] Create `finrl/agents/fx_agent.py`.
+    - [x] TDD: Test Agent initialization (wraps PPO).
+    - [x] Config: Hyperparameters.
+- [x] **Training Loop**
+    - [x] TDD: Test `train_model()` saves artifacts.
+    - [x] Integration: Train on `fx_data_2021_2022.parquet`.
+- [x] **Evaluation**
+    - [x] TDD: Test `predict()` / `trade()`.
+    - [x] Backtest on hold-out data (split from 2022).
+    - [x] Calculate Sharpe Ratio.

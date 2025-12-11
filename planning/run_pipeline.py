@@ -10,7 +10,7 @@ from dataops.pipeline import FXDataPipeline
 def main():
     pipeline = FXDataPipeline()
     
-    tickers = ['EURUSD=X', 'GBPUSD=X', 'JPY=X', 'SEK=X']
+    tickers = ['EURUSD=X', 'GBPUSD=X', 'JPY=X', 'SEK=X', 'EURSEK=X']
     start_date = '2021-01-01'
     end_date = '2023-01-01' # through 2022
     interval = '1d'

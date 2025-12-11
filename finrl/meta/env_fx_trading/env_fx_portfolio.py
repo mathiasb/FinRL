@@ -58,7 +58,7 @@ class FXPortfolioEnv(gym.Env):
         super().reset(seed=seed)
         
         self.day = 0
-        self.data = self.df.loc[self.day, :]
+
         
         # Initialize state: [Portfolio Value] + [Holdings per ticker] + [Features per ticker...]
         # For this MVP, let's stick to a vector representation.
