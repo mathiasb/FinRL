@@ -20,22 +20,22 @@
     - [ ] Save processed data to `data/fx_data_2021_2022.parquet`.
 
 ## Phase 2: Unified Environment Construction
-- [ ] **Scaffold Env Class (TDD)**
-    - [ ] Create `finrl/meta/env_fx_trading` directory.
-    - [ ] Create `tests/fixtures/fx_test_data.parquet` (Static data for consistent testing).
-    - [ ] TDD: Create `env_fx_portfolio.py` and `tests/test_env_fx_portfolio.py`.
-    - [ ] Inherit from `gymnasium.Env`.
-- [ ] **Define Spaces**
-    - [ ] Action Space: `Box` (Weights).
-    - [ ] Observation Space: `Box` (Windowed Features).
-- [ ] **Implement Logic**
-    - [ ] `reset()` with seed.
-    - [ ] `step()` with transaction costs and swap rates.
-- [ ] **Validation (TDD)**
-    - [ ] Test `reset()` seed consistency.
-    - [ ] Test `step()` invariant: Zero actions -> No change in portfolio value (minus costs).
-    - [ ] Test `step()` invariant: Costs are deducted correctly.
-    - [ ] Verify `check_env` from Stable-Baselines3.
+- [x] **Scaffold Env Class (TDD)**
+    - [x] Create `finrl/meta/env_fx_trading` directory.
+    - [x] Create `tests/fixtures/fx_test_data.parquet` (Static data for consistent testing).
+    - [x] TDD: Create `env_fx_portfolio.py` and `tests/test_env_fx_portfolio.py`.
+    - [x] Inherit from `gymnasium.Env`.
+- [x] **Define Spaces**
+    - [x] Action Space: `Box` (Weights).
+    - [x] Observation Space: `Box` (Windowed Features).
+- [x] **Implement Logic**
+    - [x] `reset()` with seed.
+    - [x] `step()` with transaction costs and swap rates.
+- [x] **Validation (TDD)**
+    - [x] Test `reset()` seed consistency.
+    - [x] Test `step()` invariant: Zero actions -> No change in portfolio value (minus costs).
+    - [x] Test `step()` invariant: Costs are deducted correctly.
+    - [x] Verify `check_env` from Stable-Baselines3.
 
 ## Phase 3: Agent Training
 - [ ] **Setup Agent**
