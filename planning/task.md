@@ -37,13 +37,26 @@
     - [x] Test `step()` invariant: Costs are deducted correctly.
     - [x] Verify `check_env` from Stable-Baselines3.
 
-## Phase 3: Agent Training
-- [ ] **Setup Agent**
-    - [ ] Configure PPO (SB3).
-    - [ ] Set Hyperparameters (Batch size, Learning rate).
+## Phase 3: DevOps & Quality Assurance
+- [x] **CI/CD Pipeline**
+    - [x] Create `.github/workflows/ci_pr.yml`.
+    - [x] Configure triggers: Push to main, PRs.
+    - [x] Job: Linting (Ruff/Black).
+    - [x] Job: Unit Tests (Pytest with Coverage).
+- [x] **Development Standards**
+    - [x] Create `docs/CONTRIBUTING.md` (TDD Guidelines).
+    - [x] Create `docs/development_workflow.md`.
+    - [x] Setup `pre-commit` hooks (Manual step managed by user/repo settings).
+
+## Phase 4: Agent Training (TDD)
+- [ ] **Setup Agent Class**
+    - [ ] Create `finrl/agents/fx_agent.py`.
+    - [ ] TDD: Test Agent initialization (wraps PPO).
+    - [ ] Config: Hyperparameters.
 - [ ] **Training Loop**
-    - [ ] Train on 2021 data.
-    - [ ] Validate on 2022 data.
+    - [ ] TDD: Test `train_model()` saves artifacts.
+    - [ ] Integration: Train on `fx_data_2021_2022.parquet`.
 - [ ] **Evaluation**
-    - [ ] Plot Cumulative Returns.
+    - [ ] TDD: Test `predict()` / `trade()`.
+    - [ ] Backtest on hold-out data (split from 2022).
     - [ ] Calculate Sharpe Ratio.

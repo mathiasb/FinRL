@@ -1,0 +1,50 @@
+name: CI Pipeline
+
+on:
+  push:
+    # Trigger on all branches to support isolated fork development
+    branches: [ "**" ]
+  pull_request:
+    branches: [ "**" ]
+
+jobs:
+  test:
+    name: Unit Tests & Lint
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ["3.11"]
+
+    steps:
+    - uses: actions/checkout@v3
+
+    - name: Set up Python ${{ matrix.python-version }}
+      uses: actions/setup-python@v4
+      with:
+        python-version: ${{ matrix.python-version }}
+
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        # Install project requirements
+        if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
+        # Install testing dependencies
+        pip install pytest coverage ruff
+
+    - name: Link FinRL Package
+      run: |
+        # Editable install or path setup to ensure imports verify
+        pip install -e .
+
+    - name: Lint with Ruff
+      run: |
+        # Run ruff on new code only (dataops, finrl/meta/env_fx_trading)
+        # Or run on everything but ignore legacy for now
+        ruff check dataops finrl/meta/env_fx_trading tests
+
+    - name: Run Unit Tests
+      run: |
+        # Run only our new unified test suite
+        # Discovers all 'test_*.py' in 'tests/' and 'dataops/tests/'
+        coverage run -m unittest discover -s . -p 'test_*.py'
+        coverage report
