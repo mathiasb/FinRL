@@ -59,6 +59,12 @@ python train_agent.py
     *   Trains a PPO agent for 5,000 timesteps (default MVP setting).
     *   Saves the trained model to `models/fx_agent_mvp.zip`.
 
+**Configuration:**
+params in `train_agent.py` allow you to customize the run:
+*   `lookback`: Window size for technical indicators (Default: 10).
+*   `total_timesteps`: Duration of training (Default: 5,000). Increases this for better performance (e.g. 1M+ for production).
+*   `transaction_cost_pct`: Trading fee simulation (Default: 0.001 or 0.1%).
+
 **Interpreting Training Output:**
 When the script runs, it logs metrics to the console. Key metrics to watch:
 *   `ep_rew_mean` (Episode Reward Mean): The average reward per episode. This should **increase** over time, indicating the agent is learning a profitable strategy.
@@ -91,7 +97,12 @@ The script prints the Final Portfolio Value and Sharpe Ratio.
     *   `> 2.0`: Excellent.
     *   `< 0`: The strategy is losing money or taking excessive risk for the return.
 *   **Sanity Check**: If the agent makes huge profits in training but loses in backtesting, it is likely **overfitting**. Try reducing model complexity or adding regularization.
+*   **Sanity Check**: If the agent makes huge profits in training but loses in backtesting, it is likely **overfitting**. Try reducing model complexity or adding regularization.
 
+## 5. Troubleshooting
+*   **KeyError: 'date'**: Ensure your parquet file index is reset. The `FXDataPipeline` handles this, but if loading custom data, ensure `date` is a column.
+*   **ModuleNotFoundError**: Run `pip install -e .` again to ensure the package is linked.
+*   **NaN Rewards**: Check if your data contains NaNs. The pipeline's `clean_data` should handle this, but verify `df.isna().sum()`.
 ## 5. Development Workflow
 
 For developers contributing to the project, please refer to:

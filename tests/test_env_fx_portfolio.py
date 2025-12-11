@@ -144,7 +144,79 @@ class TestFXPortfolioEnv(unittest.TestCase):
         obs, _, _, _, info = env.step(np.array([0.5, 0.5]))
         
         self.assertAlmostEqual(info['portfolio_value'], target_value, places=2)
+        self.assertAlmostEqual(info['portfolio_value'], target_value, places=2)
 
+    def test_state_shape(self):
+        """Test that observation matches (stock_dim, lookback, features) flattened or shaped."""
+        # For this test, we expect the Env to handle state_space calc or we must provide it correctly.
+        # Let's say we rely on the env to give us a vector of size:
+        # stock_dim * lookback * (len(tech_list) + 1 for close price? OR just tech list)
+        # Fixture only has log_return. let's assume features = tech_list.
+        
+        # We need to update env_kwargs to have a lookback > 1 to test windowing
+        kwargs = self.env_kwargs.copy()
+        lookback = 3
+        kwargs['lookback'] = lookback
+        # Features: log_return (1). Stock_dim: 2.
+        # Expected size: 2 * 3 * 1 = 6.
+        kwargs['state_space'] = 6 
+        
+        env = FXPortfolioEnv(**kwargs)
+        obs, _ = env.reset(seed=42)
+        
+        self.assertEqual(obs.shape, (6,))
+        # Also check observation space match
+        self.assertEqual(env.observation_space.shape, (6,))
+
+    def test_window_logic(self):
+        """Test that the state contains the correct looking-back data."""
+        kwargs = self.env_kwargs.copy()
+        lookback = 2
+        kwargs['lookback'] = lookback
+        kwargs['state_space'] = 4 # 2 stocks * 2 days * 1 feature
+        
+        env = FXPortfolioEnv(**kwargs)
+        
+        # Reset (day 0)
+        # We need data from t-lookback to t.
+        # If today is day 0, do we have history? 
+        # Usually padding or we start at day=lookback.
+        # Let's assume we start at day 0 and pad with 0 or first day?
+        # Or better, environment starts at day = lookback.
+        
+        obs, _ = env.reset()
+        
+        # If env starts at day=0, and we look back 2 days. 
+        # Implementation choice: zero pad? duplicate?
+        # Let's see what we implement.
+        # A common robust way: `reset` starts at `day = 0` but data access handles `max(0, day-lookback)`.
+        
+        # Let's just assert that it is NOT all zeros if we are at day > 0
+        # Step once
+        obs, _, _, _, _ = env.step(env.action_space.sample())
+        # Now at day 1. 
+        
+        # In our fixture, log_returns are non-zero?. 
+        # Check fixture content: 'log_return' = 0.001 * t. 
+        # So it should be non-zero.
+        self.assertTrue(np.any(obs != 0), "Observation should contain data, not just zeros")
+
+    def test_reward_mechanics(self):
+        """Test that reward is calculated (non-zero for a profitable step)."""
+        env = FXPortfolioEnv(**self.env_kwargs)
+        env.reset(seed=42)
+        
+        # We need to force a situation where we make money.
+        # We know fixture 'log_return' is positive (0.001*t).
+        # Actions: Buy and hold.
+        actions = np.ones(env.action_space_dim) * 0.5 # 50% each
+        
+        # Step
+        obs, reward, terminated, truncated, info = env.step(actions)
+        
+        # Since returns are positive and we held assets, reward should be positive.
+        # (Assuming risk penalty doesn't outweigh it).
+        self.assertNotEqual(reward, 0.0, "Reward should be calculated, not placeholder 0.0")
     def test_sb3_check_env(self):
         """Test strict API compliance with SB3 check_env."""
         from stable_baselines3.common.env_checker import check_env

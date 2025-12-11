@@ -15,19 +15,14 @@ def train():
     # Ensure columns match what env expects
     # Env expects 'date', 'tic' and technicals
     
-    # Define environment parameters
+    # Configuration
     stock_dim = len(df['tic'].unique())
-    state_space = stock_dim # Simplified state space
+    lookback = 10
+    tech_indicators = ['macd', 'rsi_30', 'cci_30', 'dx_30']
     
-    # We need to refine state space calculation. 
-    # In Phase 2 we defaulted to returning zeros based on 'state_space' int.
-    # To make this useful, we should ideally have a real state.
-    # But for MVP integration test, as long as shapes match, it runs.
-    
-    # For MVP, let's fix state_space to match what PPO expects (MlpPolicy).
-    # If using MlpPolicy, observation can be Flat Box.
-    # Let's say we pass state_space = stock_dim * 10 (just a guess for now)
-    # The Env returns np.zeros(state_space).
+    # State space = stock_dim * lookback * n_features
+    state_space = stock_dim * lookback * len(tech_indicators)
+    print(f"Stock Dim: {stock_dim}, State Space: {state_space}")
     
     env_kwargs = {
         "stock_dim": stock_dim,
@@ -35,9 +30,10 @@ def train():
         "initial_amount": 1000000,
         "transaction_cost_pct": 0.001,
         "reward_scaling": 1e-4,
-        "state_space": stock_dim * 10, # Dummy size
+        "state_space": state_space,
         "action_space": stock_dim,
-        "tech_indicator_list": ['macd', 'rsi_30'], # Dummy list
+        "tech_indicator_list": tech_indicators,
+        "lookback": lookback,
         "print_verbosity": 1
     }
     

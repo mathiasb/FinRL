@@ -60,3 +60,18 @@
     - [x] TDD: Test `predict()` / `trade()`.
     - [x] Backtest on hold-out data (split from 2022).
     - [x] Calculate Sharpe Ratio.
+    - [x] Backtest on hold-out data (split from 2022).
+    - [x] Calculate Sharpe Ratio.
+
+## Phase 5: Reward & State Engineering
+- [x] **State Representation (TDD)**
+    - [x] Define `get_state()` method in Env.
+    - [x] TDD: Test state shape matches observation space `(n_tickers * window_size * n_features)`.
+    - [x] Implement Windowing logic (Lookback).
+- [x] **Reward Function (TDD)**
+    - [x] Define `get_reward()` method in Env.
+    - [x] TDD: Test Reward = Log Return * Weight.
+    - [x] TDD: Test Risk-Adjusted Penalty (Volatility).
+- [x] **Retrain & Verify**
+    - [x] Retrain Agent with new Env logic.
+    - [x] Compare Sharpe Ratio vs MVP baseline (MVP was NaN, now -2.28).

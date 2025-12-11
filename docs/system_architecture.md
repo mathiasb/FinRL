@@ -99,8 +99,9 @@ sequenceDiagram
 
 ## 3. Data Structures
 ### Observation Space
-Currently defined as a Box of shape `(state_space,)`.
-*Future Refinement*: `(n_tickers, window_size, features)`
+Defined as a flattened Box of shape `(state_space,)`, where `state_space = n_tickers * window_size * n_features`.
+*   **Window Logic**: Captures data from `t - window_size + 1` to `t`.
+*   **Features**: Includes Price and Technical Indicators (MACD, RSI, etc.).
 
 ### Action Space
 Defined as a Box of shape `(n_tickers,)` representing portfolio weights.

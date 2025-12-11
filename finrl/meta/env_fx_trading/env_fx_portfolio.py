@@ -58,7 +58,7 @@ class FXPortfolioEnv(gym.Env):
         super().reset(seed=seed)
         
         self.day = 0
-
+        self.returns_memory = []
         
         # Initialize state: [Portfolio Value] + [Holdings per ticker] + [Features per ticker...]
         # For this MVP, let's stick to a vector representation.
@@ -163,43 +163,142 @@ class FXPortfolioEnv(gym.Env):
             
             # 1. Update Portfolio Value based on PREVIOUS weights and CURRENT market move.
             # Assuming cash return = 0
-            
-            # Log return approximation: r_p = sum(w * r_i)
-            # This is only approx. Exact: V_t = V_{t-1} * (sum( w_i * exp(r_i) ) + w_cash)
-            # weights sum to <= 1. w_cash = 1 - sum(w_i)
-            
             asset_returns = np.exp(current_log_rets)
+            # Portfolio Return = sum(weights * asset_returns) + (1-sum(w))
+            # Assuming cash return 0 for now
             portfolio_return = np.sum(self.current_weights * asset_returns) + (1.0 - np.sum(self.current_weights))
             
+            # Apply Return
+            old_portfolio_value = self.portfolio_value
             self.portfolio_value *= portfolio_return
             
-            # 2. Update Weights for *next* step (Action)
-            # Apply transaction costs here if weights change.
-            # cost = |new_weights - current_weights| * value * cost_pct
-            # Update self.current_weights = actions
-            
-            # Calculate cost (simplified turnover)
-            # Note: 'actions' are the Target Weights for the next period.
-            # Actual weights drift due to price moves, but let's ignore drift for this MVP step.
+            # Apply Transaction Costs
             turnover = np.sum(np.abs(actions - self.current_weights))
             cost = turnover * self.portfolio_value * self.transaction_cost_pct
-            
             self.portfolio_value -= cost
             self.current_weights = actions
-            
             self.data = step_data
+            
+            # Track Return for Reward Calculation
+            # R_t = ln(V_t / V_{t-1}) approx or (V_t - V_{t-1})/V_{t-1}
+            step_return = (self.portfolio_value - old_portfolio_value) / old_portfolio_value
+            self.returns_memory.append(step_return)
         
-        reward = 0.0 # Placeholder
+        reward = self._get_reward()
         
         info = {
             'portfolio_value': self.portfolio_value,
-            'date': current_date
+            'date': current_date,
+            'reward': reward
         }
         
-        obs = np.zeros(self.state_space, dtype=np.float32)
+        obs = self._get_state(self.day)
         
         return obs, reward, terminated, truncated, info
 
+    def _get_state(self, day):
+        """
+        Return the state vector for a value-based agent (flattened).
+        Shape: (stock_dim * lookback * n_features)
+        """
+        # Determine the window range [start_day, end_day]
+        # end_day is current 'day'.
+        # start_day is day - lookback + 1.
+        # If start_day < 0, we need to pad.
+        
+        start_day = day - self.lookback + 1
+        
+        state_frames = []
+        
+        if start_day < 0:
+            # Pad with repeated first day or zeros
+            # For simplicity, let's repeat the data at day 0 for 'abs(start_day)' times
+            # Or just take data[0:day+1] and pad head
+            
+            # Fetch available data from 0 to day+1
+            # Note: self.df might be large. We should index by day integer if possible 
+            # or rely on date logic. But 'day' is our index cursor.
+            
+            # Optimization: We can't slice self.df by 'day' easily unless we reset index or use iloc logic mapped to dates.
+            # But self.dates is sorted.
+            # self.df usually has MultiIndex or sorted by date/tic.
+            pass
+            
+        # Efficient approach: Filter df by date range using self.dates
+        # But lookback is small (e.g. 10).
+        
+        # Effective window indices in self.dates
+        window_indices = np.arange(day - self.lookback + 1, day + 1)
+        # Clip negative indices to 0 (Repeat first day)
+        window_indices = np.clip(window_indices, 0, len(self.dates)-1)
+        
+        window_dates = self.dates[window_indices]
+        
+        # Fetch data for these dates
+        # self.df should be indexed by 'date' ideally for speed, or we query.
+        # Ensure correct sort order: Date ASC, Ticker ASC
+        window_element = self.df[self.df['date'].isin(window_dates)].sort_values(['date', 'tic'])
+        
+        # Extract features
+        # Columns: We need config for 'tech_indicator_list'.
+        features = self.tech_indicator_list
+        # Maybe include 'close'? Usually yes.
+        # For now, stick to tech_indicator_list as defined.
+        
+        # vector shape: (n_dates * n_tickers * n_features)
+        flat_state = window_element[features].values.flatten()
+        
+        # Check consistency with state_space
+        # If the df is missing some dates/tickers, shape might be wrong.
+        # Robustness: Check length.
+        expected_len = self.state_space
+        
+        if len(flat_state) != expected_len:
+            # Padding needed or Truncation?
+            # If we clipped indices, we should have 'lookback' dates.
+            # Unless tickers are missing.
+            
+            # Fallback: Resize with zeros if mismatch (dangerous but safe for crash)
+            # Ideally we ensure data completeness in pipeline.
+             if len(flat_state) < expected_len:
+                 flat_state = np.pad(flat_state, (expected_len - len(flat_state), 0))
+             else:
+                 flat_state = flat_state[-expected_len:]
+                 
+        return flat_state.astype(np.float32)
+
+    def _get_reward(self):
+        """
+        Calculate Risk-Adjusted Return.
+        R = Return - Lambda * Volatility
+        """
+        if self.day == 0:
+            return 0.0
+            
+        if len(self.returns_memory) == 0:
+            return 0.0
+            
+        # Current step return
+        r_t = self.returns_memory[-1]
+        
+        # Volatility of last 'lookback' returns (or smaller window)
+        # Using same lookback for vol window matches state window intuitively
+        window_rets = self.returns_memory[-self.lookback:]
+        if len(window_rets) > 1:
+            volatility = np.std(window_rets)
+        else:
+            volatility = 0.0
+            
+        # Lambda is usually a hyperparam. Let's use 'reward_scaling' or hardcode a risk aversion
+        # For this MVP, let's treat 'reward_scaling' as strict scaler, 
+        # and add a separate risk_aversion param? Or simple hardcode 0.1
+        risk_aversion = 0.1
+        
+        # Adjusted Reward
+        adj_reward = r_t - (risk_aversion * volatility)
+        
+        # Scale
+        return adj_reward * self.reward_scaling
+
     def render(self, mode='human'):
         pass
-

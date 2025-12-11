@@ -16,15 +16,20 @@ def backtest():
     
     # Configuration (Must match training env)
     stock_dim = len(test_df['tic'].unique())
+    lookback = 10
+    tech_indicators = ['macd', 'rsi_30', 'cci_30', 'dx_30']
+    state_space = stock_dim * lookback * len(tech_indicators)
+    
     env_kwargs = {
         "stock_dim": stock_dim,
         "hmax": 100,
         "initial_amount": 1000000,
         "transaction_cost_pct": 0.001,
         "reward_scaling": 1e-4,
-        "state_space": stock_dim * 10,
+        "state_space": state_space,
         "action_space": stock_dim,
-        "tech_indicator_list": ['macd', 'rsi_30'],
+        "tech_indicator_list": tech_indicators,
+        "lookback": lookback,
         "print_verbosity": 0
     }
     
