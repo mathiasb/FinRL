@@ -6,7 +6,9 @@ from finrl.agents.fx_agent import FXAgent
 from stable_baselines3 import PPO
 import os
 
-def train():
+import argparse
+
+def train(total_timesteps=30000, learning_rate=2.27e-5, batch_size=256, n_steps=2048):
     # Load Data
     df = pd.read_parquet('data/fx_data_2018_2023.parquet')
     # Reset index to ensure 'date' is a column
@@ -47,16 +49,16 @@ def train():
         "MlpPolicy", 
         env, 
         verbose=1,
-        learning_rate=2.27e-5,
-        n_steps=2048,
-        batch_size=256,
+        learning_rate=learning_rate,
+        n_steps=n_steps,
+        batch_size=batch_size,
         gamma=0.914,
         ent_coef=0.00015
     )
     
     # 5. Train
-    print("Training Agent...")
-    model.learn(total_timesteps=30000) # Increased for larger n_steps
+    print(f"Training Agent for {total_timesteps} steps with LR={learning_rate}...")
+    model.learn(total_timesteps=total_timesteps) # Increased for larger n_steps
     
     # 6. Save
     models_dir = "models" # Keep models_dir for consistency, though hardcoded path is used
@@ -66,4 +68,10 @@ def train():
     print("Model saved to models/fx_agent_tuned")
 
 if __name__ == "__main__":
-    train()
+    parser = argparse.ArgumentParser(description='Train FX Agent')
+    parser.add_argument('--timesteps', type=int, default=30000, help='Total training timesteps')
+    parser.add_argument('--lr', type=float, default=2.27e-5, help='Learning Rate')
+    
+    args = parser.parse_args()
+    
+    train(total_timesteps=args.timesteps, learning_rate=args.lr)

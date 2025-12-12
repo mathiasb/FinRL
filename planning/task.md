@@ -102,3 +102,12 @@
     - [x] Train Agent on expanded/enhanced data.
     - [x] Run `tune_agent.py` again.
     - [x] Run `benchmark_agent.py` and aim for Positive Alpha (Achieved -0.27%, improved from -1.25%).
+
+## Phase 8: User Experience & Parameterization
+- [x] **CLI Improvements (Argparse)**
+    - [x] Update `planning/run_pipeline.py` to accept `--tickers` and `--start-date`.
+    - [x] Update `train_agent.py` to accept `--total-timesteps` and `--learning-rate`.
+    - [x] Update `benchmark_agent.py` to accept `--model-path`.
+- [x] **Notebook Enhancement**
+    - [x] Update `alpha_fx_demo.ipynb` to invoke functions with parameters (e.g., `train(total_timesteps=50000)`).
+    - [x] Demonstrate a "Higher Performance" run in the notebook.
