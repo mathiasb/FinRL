@@ -8,7 +8,7 @@ import os
 
 def train():
     # Load Data
-    df = pd.read_parquet('data/fx_data_2021_2022.parquet')
+    df = pd.read_parquet('data/fx_data_2018_2023.parquet')
     # Reset index to ensure 'date' is a column
     df = df.reset_index()
     
@@ -19,7 +19,7 @@ def train():
     # Configuration
     stock_dim = len(df['tic'].unique())
     lookback = 10
-    tech_indicators = ['macd', 'rsi_30', 'cci_30', 'dx_30']
+    tech_indicators = ['macd', 'rsi_30', 'cci_30', 'dx_30', 'boll_ub', 'boll_lb', 'atr', 'adx', 'wr', 'us_roi']
     
     # State space = stock_dim * lookback * n_features
     state_space = stock_dim * lookback * len(tech_indicators)
@@ -41,23 +41,22 @@ def train():
     # Create Environment
     env = FXPortfolioEnv(df=df, **env_kwargs)
     
-    # 4. Initialize Agent (Tuned)
-    # Best Params from Optuna (Study: no-name-e205799b...)
-    # Value: -2.32e-06
+    # 4. Initialize Agent (Tuned Phase 7)
+    # Best Params from Optuna (Phase 7 w/ Macro Features)
     model = PPO(
         "MlpPolicy", 
         env, 
         verbose=1,
-        learning_rate=1.0189e-05,
-        n_steps=512,
-        batch_size=64,
-        gamma=0.9259,
-        ent_coef=0.0095
+        learning_rate=2.27e-5,
+        n_steps=2048,
+        batch_size=256,
+        gamma=0.914,
+        ent_coef=0.00015
     )
     
     # 5. Train
     print("Training Agent...")
-    model.learn(total_timesteps=5000) # Keep short for MVP, normally increase to 100k+
+    model.learn(total_timesteps=30000) # Increased for larger n_steps
     
     # 6. Save
     models_dir = "models" # Keep models_dir for consistency, though hardcoded path is used

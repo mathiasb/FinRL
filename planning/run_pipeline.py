@@ -11,8 +11,8 @@ def main():
     pipeline = FXDataPipeline()
     
     tickers = ['EURUSD=X', 'GBPUSD=X', 'JPY=X', 'SEK=X', 'EURSEK=X']
-    start_date = '2021-01-01'
-    end_date = '2023-01-01' # through 2022
+    start_date = '2018-01-01'
+    end_date = '2023-01-01' # 5 years of data
     interval = '1d'
     
     print(f"Fetching data for {tickers}...")
@@ -48,8 +48,11 @@ def main():
     df = pipeline.clean_data(df)
     
     print("Adding features...")
-    features = ['macd', 'rsi_30', 'cci_30', 'dx_30', 'boll_ub', 'boll_lb']
+    features = ['macd', 'rsi_30', 'cci_30', 'dx_30', 'boll_ub', 'boll_lb', 'atr', 'adx', 'wr']
     df = pipeline.add_features(df, features)
+    
+    print("Merging Macro Data (^TNX)...")
+    df = pipeline.merge_macro_data(df, macro_ticker='^TNX', start_date=start_date, end_date=end_date)
     
     print("Normalizing data...")
     # Normalize per ticker
@@ -61,10 +64,21 @@ def main():
     
     final_df = pd.concat(normalized_dfs)
     
+    # Enforce Square Data (Env Requirement)
+    # Filter dates where we have records for ALL tickers
+    param_tic_count = len(tickers)
+    date_counts = final_df.index.value_counts()
+    valid_dates = date_counts[date_counts == param_tic_count].index
+    
+    print(f"Filtering non-square data. Dropping {len(date_counts) - len(valid_dates)} dates.")
+    final_df = final_df[final_df.index.isin(valid_dates)]
+    
+    final_df = final_df.sort_index()
+    
     print(f"Final shape: {final_df.shape}")
     print(final_df.head())
     
-    output_path = 'data/fx_data_2021_2022.parquet'
+    output_path = 'data/fx_data_2018_2023.parquet'
     final_df.to_parquet(output_path)
     print(f"Saved to {output_path}")
 

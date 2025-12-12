@@ -6,7 +6,7 @@ import matplotlib.pyplot as plt
 
 def backtest():
     # Load Data
-    df = pd.read_parquet('data/fx_data_2021_2022.parquet')
+    df = pd.read_parquet('data/fx_data_2018_2023.parquet')
     df = df.reset_index()
     
     # Filter for Backtest Period (e.g., 2022)
@@ -17,7 +17,7 @@ def backtest():
     # Configuration (Must match training env)
     stock_dim = len(test_df['tic'].unique())
     lookback = 10
-    tech_indicators = ['macd', 'rsi_30', 'cci_30', 'dx_30']
+    tech_indicators = ['macd', 'rsi_30', 'cci_30', 'dx_30', 'boll_ub', 'boll_lb', 'atr', 'adx', 'wr', 'us_roi']
     state_space = stock_dim * lookback * len(tech_indicators)
     
     env_kwargs = {

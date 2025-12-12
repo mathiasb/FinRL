@@ -88,3 +88,85 @@ class FXDataPipeline:
             
         df = df.dropna()
         return df
+
+    def merge_macro_data(self, fx_df: pd.DataFrame, macro_ticker: str = '^TNX', start_date: str = None, end_date: str = None) -> pd.DataFrame:
+        """
+        Fetches macro data (e.g. Bond Yields), reindexes to match FX trading days, 
+        and merges it as a new feature 'us_roi' (or similar).
+        """
+        fx_df = fx_df.copy()
+        
+        # Determine dates from fx_df if not provided
+        if start_date is None:
+            start_date = fx_df['date'].min().strftime('%Y-%m-%d')
+        if end_date is None:
+            end_date = fx_df['date'].max().strftime('%Y-%m-%d')
+            
+        # 1. Fetch Macro Data
+        macro_df = self.fetch_data([macro_ticker], start_date, end_date)
+        
+        # 2. Process Macro Data
+        # Keep only Close (Yield)
+        # Handle MultiIndex if present (yfinance often returns (Price, Ticker))
+        if isinstance(macro_df.columns, pd.MultiIndex):
+             # Try to get Close level
+             try:
+                 macro_series = macro_df.xs('Close', level=0, axis=1) # Get Close for all tickers
+                 # If we have multiple tickers or just one, it might be DF or Series
+                 if isinstance(macro_series, pd.DataFrame):
+                     macro_series = macro_series.iloc[:, 0] # Take first column (assuming 1 ticker)
+             except KeyError:
+                 # Try capitalized or lowercase
+                 try:
+                     macro_series = macro_df.xs('close', level=0, axis=1).iloc[:, 0]
+                 except:   
+                     raise ValueError(f"Could not find Close/close in MultiIndex columns: {macro_df.columns}")
+        elif 'Close' in macro_df.columns:
+            macro_series = macro_df['Close']
+        elif 'close' in macro_df.columns:
+            macro_series = macro_df['close']
+        else:
+            raise ValueError(f"Macro data for {macro_ticker} has no Close column. Cols: {macro_df.columns}")
+            
+        # Ensure it is a Series
+        if isinstance(macro_series, pd.DataFrame):
+            macro_series = macro_series.iloc[:, 0]
+
+        macro_series.name = 'us_roi'
+        
+        # 3. Align Dates
+        # Get unique FX dates
+        if 'date' in fx_df.columns:
+            unique_dates = fx_df['date'].unique()
+        else:
+            unique_dates = fx_df.index.unique()
+            
+        unique_dates = np.sort(pd.to_datetime(unique_dates))
+        
+        # Reindex Macro to match FX dates
+        macro_aligned = macro_series.reindex(unique_dates)
+        
+        # 4. Fill Missing (Forward Fill then 0)
+        macro_aligned = macro_aligned.ffill().fillna(0)
+        
+        # 5. Merge
+        if isinstance(macro_aligned, pd.Series):
+            macro_aligned_df = macro_aligned.to_frame()
+        else:
+            macro_aligned_df = macro_aligned
+            
+        macro_aligned_df.columns = ['us_roi'] # Force rename to ensure merge works
+        macro_aligned_df.index.name = 'date'
+        
+        # Reset index to make 'date' a column if needed
+        macro_aligned_df = macro_aligned_df.reset_index()
+        
+        if 'date' in fx_df.columns:
+            # Ensure types match
+            fx_df['date'] = pd.to_datetime(fx_df['date'])
+            merged_df = pd.merge(fx_df, macro_aligned_df, on='date', how='left')
+        else:
+            # Merge on index
+            merged_df = pd.merge(fx_df, macro_aligned_df, left_index=True, right_on='date', how='left').set_index('date')
+
+        return merged_df

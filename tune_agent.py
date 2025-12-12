@@ -17,15 +17,19 @@ def optimize_agent(trial):
     ent_coef = trial.suggest_float("ent_coef", 0.0, 0.01)
     
     # 2. Data Setup
-    # Load data
-    df = pd.read_parquet('data/fx_data_2021_2022.parquet')
-    if 'date' not in df.columns:
-        df = df.reset_index()
+    # Load Data
+    df = pd.read_parquet('data/fx_data_2018_2023.parquet')
+    df = df.reset_index()
+    df['date'] = pd.to_datetime(df['date'])
     
-    # Configuration matches our best practice
-    stock_dim = len(df['tic'].unique())
+    # Split Train/Val
+    train_df = df[df['date'] < '2022-01-01']
+    val_df = df[df['date'] >= '2022-01-01']
+    
+    # Env Config
+    stock_dim = len(train_df['tic'].unique())
     lookback = 10
-    tech_indicators = ['macd', 'rsi_30', 'cci_30', 'dx_30']
+    tech_indicators = ['macd', 'rsi_30', 'cci_30', 'dx_30', 'boll_ub', 'boll_lb', 'atr', 'adx', 'wr', 'us_roi']
     state_space = stock_dim * lookback * len(tech_indicators)
     
     env_kwargs = {

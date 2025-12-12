@@ -7,30 +7,26 @@ import os
 
 def run_benchmark():
     # 1. Load Data
-    try:
-        df = pd.read_parquet('data/fx_data_2021_2022.parquet')
-    except Exception as e:
-        print(f"Error loading data: {e}")
+    # 1. Load Data
+    data_path = 'data/fx_data_2018_2023.parquet'
+    if not os.path.exists(data_path):
+        print(f"Data not found: {data_path}")
         return
         
+    df = pd.read_parquet(data_path)
     # Ensure date is a column
-    # If saved with index, it might be in index
     if 'date' not in df.columns:
         df = df.reset_index()
-
-    # Filter for 2022 (Validation Set)
-    # Assuming 'date' column exists and is datetime or string
-    # If date is string, conversion might be needed
-    if df['date'].dtype == object:
-        df['date'] = pd.to_datetime(df['date'])
         
-    validation_df = df[df['date'] >= '2022-01-01'].copy()
-    validation_df = validation_df.sort_values(['date', 'tic'])
+    df['date'] = pd.to_datetime(df['date'])
     
-    # 2. Config
+    # Validation Data (2022)
+    validation_df = df[df['date'] >= '2022-01-01'].reset_index(drop=True)
+    
+    # 2. Setup Environment
     stock_dim = len(validation_df['tic'].unique())
     lookback = 10
-    tech_indicators = ['macd', 'rsi_30', 'cci_30', 'dx_30']
+    tech_indicators = ['macd', 'rsi_30', 'cci_30', 'dx_30', 'boll_ub', 'boll_lb', 'atr', 'adx', 'wr', 'us_roi']
     state_space = stock_dim * lookback * len(tech_indicators)
     
     env_kwargs = {

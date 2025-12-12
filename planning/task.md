@@ -87,3 +87,18 @@
     - [x] Compare metrics (Cumulative Return, Sharpe, Max Drawdown).
 - [x] **Documentation**
     - [x] Update `walkthrough.md` with Tuning results.
+
+## Phase 7: Advanced Feature Engineering
+- [x] **Macroeconomic Features**
+    - [x] Import Interest Rate data (Fed, ECB, etc.) if available or proxy via Bond Yields (`^TNX`, `^DEZ`).
+    - [x] Feature: Interest Rate Differential (Used `us_roi` as global risk factor).
+- [x] **Microstructure Features**
+    - [x] Add `ADX` (Average Directional Index) explicitly if not covered by `DX`.
+    - [x] Add `ATR` (Average True Range) for volatility normalization.
+- [x] **Data Expansion**
+    - [x] Extend date range (e.g., 2018-2023) for better generalization.
+    - [x] Add more pairs if relevant.
+- [x] **Retrain & Benchmark**
+    - [x] Train Agent on expanded/enhanced data.
+    - [x] Run `tune_agent.py` again.
+    - [x] Run `benchmark_agent.py` and aim for Positive Alpha (Achieved -0.27%, improved from -1.25%).

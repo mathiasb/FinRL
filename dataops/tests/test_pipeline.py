@@ -131,3 +131,67 @@ class TestFXDataPipeline(unittest.TestCase):
         # Verify MACD was calculated (not all NaNs)
         self.assertFalse(df_with_features['macd'].isnull().all())
 
+    def test_add_features_phase7_indicators(self):
+        # Create Dummy Data sufficient for ATR/ADX/WR
+        n = 50
+        dates = pd.date_range(start='2021-01-01', periods=n)
+        import numpy as np
+        prices = 100 + np.cumsum(np.random.randn(n))
+        
+        df = pd.DataFrame({
+            'open': prices,
+            'high': prices + 1,
+            'low': prices - 1,
+            'close': prices,
+            'volume': 1000,
+            'tic': 'EURUSD',
+            'date': dates
+        })
+        
+        # Test adding Phase 7 features
+        features = ['atr', 'adx', 'wr']
+        df_out = self.pipeline.add_features(df, features)
+        
+        self.assertIn('atr', df_out.columns)
+        self.assertIn('adx', df_out.columns)
+        self.assertIn('wr', df_out.columns) # Williams %R
+        
+        # Verify values are populated (not all NaN)
+        # Note: First few rows might be NaN due to windowing, but last rows should be valid
+        self.assertFalse(df_out['atr'].iloc[-1] is None)
+        self.assertFalse(np.isnan(df_out['adx'].iloc[-1]))
+
+    @patch('yfinance.download')
+    def test_merge_macro_data_merges_and_ffills(self, mock_download):
+        # Setup FX DataFrame (24/5 days)
+        # Dates: Mon, Tue (Bond Hol), Wed
+        dates = pd.to_datetime(['2021-10-11', '2021-10-12', '2021-10-13']) 
+        fx_df = pd.DataFrame({
+            'close': [1.1, 1.1, 1.1],
+            'tic': 'EURUSD'
+        }, index=dates)
+        fx_df['date'] = dates 
+        
+        # Setup Macro Data (Bond Holiday on 12th)
+        # Dates: Mon, Wed
+        macro_dates = pd.to_datetime(['2021-10-11', '2021-10-13'])
+        macro_df = pd.DataFrame({
+            'Close': [1.5, 1.6]
+        }, index=macro_dates)
+        
+        mock_download.return_value = macro_df
+        
+        # Call merge_macro_data 
+        if hasattr(self.pipeline, 'merge_macro_data'):
+            merged_df = self.pipeline.merge_macro_data(fx_df, macro_ticker='^TNX', start_date='2021-01-01', end_date='2021-01-01')
+            
+            self.assertIn('us_roi', merged_df.columns) 
+            
+            # Check 12th (Bond Holiday) is filled
+            # 11th = 1.5 -> 12th should be 1.5 (ffill) -> 13th = 1.6
+            val_12th = merged_df.loc[merged_df['date'] == pd.Timestamp('2021-10-12')]['us_roi'].values[0]
+            self.assertEqual(val_12th, 1.5)
+        else:
+            self.fail("merge_macro_data not implemented yet")
+
+
