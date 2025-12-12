@@ -36,9 +36,11 @@ def backtest():
     # Create Environment
     env = FXPortfolioEnv(df=test_df, **env_kwargs)
     
-    # Load Agent
-    agent = FXAgent(env=env)
-    agent.load("models/fx_agent_mvp")
+    # Load Agent (Using PPO directly for consistency)
+    from stable_baselines3 import PPO
+    model_path = "models/fx_agent_tuned.zip"
+    print(f"Loading model from: {model_path}")
+    model = PPO.load(model_path)
     
     # Run Backtest
     print("Starting backtest on 2022 data...")
@@ -49,7 +51,7 @@ def backtest():
     dates = []
     
     while not done:
-        action, _states = agent.predict(obs, deterministic=True)
+        action, _states = model.predict(obs, deterministic=True)
         obs, reward, terminated, truncated, info = env.step(action)
         done = terminated or truncated
         

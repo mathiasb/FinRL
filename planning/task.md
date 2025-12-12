@@ -75,3 +75,15 @@
 - [x] **Retrain & Verify**
     - [x] Retrain Agent with new Env logic.
     - [x] Compare Sharpe Ratio vs MVP baseline (MVP was NaN, now -2.28).
+
+## Phase 6: Tuning & Benchmarking
+- [x] **Hyperparameter Tuning (Optuna)**
+    - [x] Create `tune_agent.py`.
+    - [x] Define objective function (Maximize Sharpe/Reward).
+    - [x] Optimize: `learning_rate`, `batch_size`, `n_steps`, `gamma`.
+- [x] **Benchmarking**
+    - [x] Create `benchmark_agent.py`.
+    - [x] Implement Baselines: Buy & Hold (Equal Weight), Random Agent.
+    - [x] Compare metrics (Cumulative Return, Sharpe, Max Drawdown).
+- [x] **Documentation**
+    - [x] Update `walkthrough.md` with Tuning results.

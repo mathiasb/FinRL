@@ -1,7 +1,7 @@
 alpaca-py
 alpaca_trade_api>=2.1.0
 ccxt>=1.66.32
-elegantrl
+# elegantrl
 
 gputil
 gymnasium
@@ -24,6 +24,7 @@ pyfolio-reloaded
 pytest
 ray[default]
 ray[tune]
+optuna
 recommonmark
 
 # Model Building Requirements
@@ -41,7 +42,7 @@ sphinx
 sphinx_rtd_theme
 
 SQLAlchemy
-stable-baselines3[extra]
+stable-baselines3
 stockstats>=0.4.0
 swig
 

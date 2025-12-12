@@ -106,3 +106,31 @@ Defined as a flattened Box of shape `(state_space,)`, where `state_space = n_tic
 ### Action Space
 Defined as a Box of shape `(n_tickers,)` representing portfolio weights.
 *Constraint*: Weights should sum to <= 1.0 (remainder is cash).
+
+## 4. Optimization Module
+The Optimization Module maximizes agent performance through hyperparameter tuning and benchmarking.
+
+### 4.1 Hyperparameter Tuning Loop
+The `tune_agent.py` script utilizes **Optuna** to optimize PPO hyperparameters.
+
+```mermaid
+flowchart TD
+    A[Start Optimization] --> B{Select Params}
+    B -->|Optuna Suggest| C[Init PPO Agent]
+    C -->|Train Short Episode| D[Evaluate Reward]
+    D -->|Return Score| E[Optuna Pruning/update]
+    E -->|Next Trial| B
+    E -->|Max Trials Reached| F[Save Best Params]
+```
+
+### 4.2 Benchmarking
+The `benchmark_agent.py` script compares the Tuned Agent against a Baseline.
+
+```mermaid
+graph LR
+    A[Tuned Model] --> B(Run Backtest)
+    C[Equal Weight Baseline] --> D(Run Backtest)
+    B --> E{Compare Metrics}
+    D --> E
+    E --> F[Report: Sharpe, Return, Drawdown]
+```

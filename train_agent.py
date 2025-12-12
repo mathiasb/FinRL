@@ -3,6 +3,7 @@ import numpy as np
 import gymnasium as gym
 from finrl.meta.env_fx_trading.env_fx_portfolio import FXPortfolioEnv
 from finrl.agents.fx_agent import FXAgent
+from stable_baselines3 import PPO
 import os
 
 def train():
@@ -40,19 +41,30 @@ def train():
     # Create Environment
     env = FXPortfolioEnv(df=df, **env_kwargs)
     
-    # Create Agent
-    agent = FXAgent(env=env)
+    # 4. Initialize Agent (Tuned)
+    # Best Params from Optuna (Study: no-name-e205799b...)
+    # Value: -2.32e-06
+    model = PPO(
+        "MlpPolicy", 
+        env, 
+        verbose=1,
+        learning_rate=1.0189e-05,
+        n_steps=512,
+        batch_size=64,
+        gamma=0.9259,
+        ent_coef=0.0095
+    )
     
-    # Train
-    print("Starting training...")
-    agent.train(total_timesteps=5000)
-    print("Training finished.")
+    # 5. Train
+    print("Training Agent...")
+    model.learn(total_timesteps=5000) # Keep short for MVP, normally increase to 100k+
     
-    # Save
-    models_dir = "models"
+    # 6. Save
+    models_dir = "models" # Keep models_dir for consistency, though hardcoded path is used
     os.makedirs(models_dir, exist_ok=True)
-    agent.save(f"{models_dir}/fx_agent_mvp")
-    print(f"Model saved to {models_dir}/fx_agent_mvp")
+    model.save("models/fx_agent_tuned")
+    print("Training finished.")
+    print("Model saved to models/fx_agent_tuned")
 
 if __name__ == "__main__":
     train()
