@@ -1,6 +1,33 @@
 # FinRL Alpha-FX Usage Guide
 
-This guide provides a step-by-step tutorial on how to use the Alpha-FX system, from data preparation to agent training and evaluation.
+This guide provides a step-by-step tutorial on how to use the Alpha-FX system, designed for both developers and financial analysts.
+
+## FX Trading: A Primer for Non-Experts
+If you are new to Forex (Foreign Exchange) trading, here are the key concepts used in this project:
+
+### 1. What is a Ticker Pair?
+In FX, you trade pairs (e.g., `EURUSD`).
+*   **Base Currency**: `EUR` (Euro).
+*   **Quote Currency**: `USD` (US Dollar).
+*   **Price**: How much Quote Currency is needed to buy one unit of Base Currency.
+    *   *Example*: `EURUSD = 1.10` means 1 Euro costs 1.10 US Dollars.
+
+### 2. Actions (Weights)
+In our Reinforcement Learning environment, the agent outputs **Portfolio Weights** for each currency.
+*   `[0.5, 0.5]` means 50% of value in EUR, 50% in USD.
+*   **Buying/Selling**: Changing weights (e.g., from `[0, 1]` to `[1, 0]`) implies selling USD to buy EUR.
+
+### 3. The "Carry Trade" (Interest Rates)
+A major driver in FX is the **Interest Rate Differential**.
+*   Money flows to currencies with higher interest rates (to zero-risk yield).
+*   **Alpha-FX Feature**: We feed the agent the **US 10-Year Treasury Yield (`^TNX`)** so it can learn to "follow the yield."
+
+### 4. Technical Indicators
+*   **Trends**: Is the price going up or down? (MACD, ADX).
+*   **Volatility**: How "bouncy" is the price? (ATR, Bollinger Bands).
+*   **Momentum**: Is the move overextended? (RSI, Williams %R).
+
+---
 
 ## 1. Setup
 
@@ -22,7 +49,9 @@ pip install -e .
 
 ### Quick Start (3-Step Workflow)
 Once setup is complete, the standard workflow is:
-1.  `python planning/run_pipeline.py` → Creates `data/fx_data_2021_2022.parquet`
+### Quick Start (3-Step Workflow)
+Once setup is complete, the standard workflow is:
+1.  `python planning/run_pipeline.py` → Creates `data/fx_data_2018_2023.parquet`
 2.  `python train_agent.py` → Creates `models/fx_agent_tuned.zip`
 3.  `python backtest_agent.py` → Evaluates the agent
 
@@ -36,6 +65,17 @@ This deletes the `data/` and `models/` directories.
 ## 2. Data Preparation (DataOps)
 
 Before training, you need to download and process the FX data. The pipeline fetches data from Yahoo Finance, cleans it, adds technical indicators, and saves it as a Parquet file.
+
+```mermaid
+graph LR
+    A[Yahoo Finance] -->|Fetch| B(Raw Data)
+    B -->|Clean| C{Data Pipeline}
+    C -->|Add Technicals| D[MACD, RSI, ADX, ATR]
+    C -->|Merge Macro| E[US 10Y Yield ^TNX]
+    D --> F(Final Dataset)
+    E --> F
+    F -->|Save| G[(fx_data_2018_2023.parquet)]
+```
 
 **Features Generated:**
 *   **[MACD](https://www.investopedia.com/terms/m/macd.asp) (Moving Average Convergence Divergence)**:
@@ -61,7 +101,7 @@ python planning/run_pipeline.py
 
 *   **Input**: Fetches data for `EURUSD=X`, `GBPUSD=X`, `JPY=X`, `SEK=X`, and `EURSEK=X`.
     *   *To customize*: Edit `planning/run_pipeline.py` and modify the `TICKERS` list.
-*   **Output**: Creates `data/fx_data_2021_2022.parquet`.
+*   **Output**: Creates `data/fx_data_2018_2023.parquet`.
     *   *Note*: If you change tickers or date ranges, you might want to rename this file in `planning/run_pipeline.py` to reflect the new content (e.g., `data/fx_majors_2023.parquet`).
 
 ## 3. Training the Agent
@@ -84,7 +124,7 @@ python train_agent.py
 ```
 
 *   **Process**:
-    *   Loads `data/fx_data_2021_2022.parquet`.
+    *   Loads `data/fx_data_2018_2023.parquet`.
     *   Initializes the `FXPortfolioEnv` with transaction costs (0.1%).
     *   Trains a PPO agent for 5,000 timesteps (default MVP setting).
     *   Saves the trained model to `models/fx_agent_tuned.zip`.

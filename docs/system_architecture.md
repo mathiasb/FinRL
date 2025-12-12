@@ -28,13 +28,17 @@ The data flows through four distinct stages:
 ```mermaid
 flowchart LR
     A["Raw Data (Yahoo)"] -->|fetch_data| B("DataFrame")
+    M["Macro Data (^TNX)"] -->|fetch_data| B
     B -->|clean_data| C{"Clean Data"}
     C -->|add_features| D["Technicals Added"]
-    D -->|normalize_data| E["Log Returns / Scaled"]
-    E -->|Save| F[("Parquet File")]
+    C -->|merge_macro| E["Yield Diff Added"]
+    D --> F(Final Dataset)
+    E --> F
+    F -->|normalize_data| G["Log Returns / Scaled"]
+    G -->|Save| H[("Parquet File")]
     
     subgraph Feature Engineering
-    D -- "MACD, RSI, etc." --> D
+    D -- "MACD, RSI, ATR, ADX" --> D
     end
 ```
 
