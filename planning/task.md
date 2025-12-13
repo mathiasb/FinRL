@@ -111,3 +111,13 @@
 - [x] **Notebook Enhancement**
     - [x] Update `alpha_fx_demo.ipynb` to invoke functions with parameters (e.g., `train(total_timesteps=50000)`).
     - [x] Demonstrate a "Higher Performance" run in the notebook.
+
+## Phase 9: Visualization & Reporting
+- [x] **Training Visualization**
+    - [x] Update `train_agent.py` to use `Monitor` wrapper and save logs to `results/`.
+    - [x] Add Notebook Cell: Plot Learning Curve (Reward vs Timesteps).
+- [x] **Performance Visualization**
+    - [x] Update `benchmark_agent.py` to save equity curves to `results/equity.csv`.
+    - [x] Add Notebook Cell: Plot Equity Curve (Agent vs Baseline).
+- [ ] **Tuning Visualization**
+    - [ ] (Optional) Visualize Optuna history if time permits.

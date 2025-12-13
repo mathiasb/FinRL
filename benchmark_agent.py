@@ -131,6 +131,31 @@ def run_benchmark():
     results_df = pd.DataFrame([agent_metrics, baseline_metrics])
     print("\nBenchmark Results (2022 Validation):")
     print(results_df.to_string(index=False))
+    
+    # 9. Save Equity Curve for Plotting
+    # Ensure lengths match
+    min_len = min(len(agent_portfolio_values), len(baseline_values), len(validation_df))
+    
+    # We might have one more value than dates if initial is included and step logic differs
+    # Just take the last N values to match validation_df or similar
+    # For simplicity, just save raw values with an index
+    
+    equity_df = pd.DataFrame({
+        'agent': agent_portfolio_values[:min_len],
+        'baseline': baseline_values[:min_len]
+    })
+    
+    # Try to add dates if possible
+    try:
+        # Assuming validation_df index or date column aligns
+        # If env starts from index 0, dates might align from start
+        equity_df['date'] = validation_df['date'].iloc[:min_len].values
+    except:
+        pass
+        
+    os.makedirs('results', exist_ok=True)
+    equity_df.to_csv('results/equity.csv', index=False)
+    print("Equity curve saved to results/equity.csv")
 
 if __name__ == "__main__":
     run_benchmark()

@@ -4,8 +4,8 @@ import gymnasium as gym
 from finrl.meta.env_fx_trading.env_fx_portfolio import FXPortfolioEnv
 from finrl.agents.fx_agent import FXAgent
 from stable_baselines3 import PPO
+from stable_baselines3.common.monitor import Monitor
 import os
-
 import argparse
 
 def train(total_timesteps=30000, learning_rate=2.27e-5, batch_size=256, n_steps=2048):
@@ -42,6 +42,11 @@ def train(total_timesteps=30000, learning_rate=2.27e-5, batch_size=256, n_steps=
     
     # Create Environment
     env = FXPortfolioEnv(df=df, **env_kwargs)
+    
+    # Wrap in Monitor for logging
+    log_dir = "results"
+    os.makedirs(log_dir, exist_ok=True)
+    env = Monitor(env, filename=os.path.join(log_dir, "monitor.csv"))
     
     # 4. Initialize Agent (Tuned Phase 7)
     # Best Params from Optuna (Phase 7 w/ Macro Features)
