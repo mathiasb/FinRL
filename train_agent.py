@@ -8,7 +8,7 @@ from stable_baselines3.common.monitor import Monitor
 import os
 import argparse
 
-def train(total_timesteps=30000, learning_rate=2.27e-5, batch_size=256, n_steps=2048):
+def train(total_timesteps=30000, learning_rate=2.27e-5, batch_size=256, n_steps=2048, lookback=10, ent_coef=0.00015):
     # Load Data
     df = pd.read_parquet('data/fx_data_2018_2023.parquet')
     # Reset index to ensure 'date' is a column
@@ -20,12 +20,12 @@ def train(total_timesteps=30000, learning_rate=2.27e-5, batch_size=256, n_steps=
     
     # Configuration
     stock_dim = len(df['tic'].unique())
-    lookback = 10
+    # lookback = 10 # NOW USING ARGUMENT
     tech_indicators = ['macd', 'rsi_30', 'cci_30', 'dx_30', 'boll_ub', 'boll_lb', 'atr', 'adx', 'wr', 'us_roi']
     
     # State space = stock_dim * lookback * n_features
     state_space = stock_dim * lookback * len(tech_indicators)
-    print(f"Stock Dim: {stock_dim}, State Space: {state_space}")
+    print(f"Stock Dim: {stock_dim}, State Space: {state_space}, Lookback: {lookback}")
     
     env_kwargs = {
         "stock_dim": stock_dim,
@@ -58,11 +58,11 @@ def train(total_timesteps=30000, learning_rate=2.27e-5, batch_size=256, n_steps=
         n_steps=n_steps,
         batch_size=batch_size,
         gamma=0.914,
-        ent_coef=0.00015
+        ent_coef=ent_coef
     )
     
     # 5. Train
-    print(f"Training Agent for {total_timesteps} steps with LR={learning_rate}...")
+    print(f"Training Agent for {total_timesteps} steps | LR={learning_rate} | Ent Coef={ent_coef} | Lookback={lookback}...")
     model.learn(total_timesteps=total_timesteps) # Increased for larger n_steps
     
     # 6. Save
@@ -76,7 +76,9 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Train FX Agent')
     parser.add_argument('--timesteps', type=int, default=30000, help='Total training timesteps')
     parser.add_argument('--lr', type=float, default=2.27e-5, help='Learning Rate')
+    parser.add_argument('--lookback', type=int, default=10, help='Lookback window size')
+    parser.add_argument('--ent-coef', type=float, default=0.00015, help='Entropy coefficient (Exploration)')
     
     args = parser.parse_args()
     
-    train(total_timesteps=args.timesteps, learning_rate=args.lr)
+    train(total_timesteps=args.timesteps, learning_rate=args.lr, lookback=args.lookback, ent_coef=args.ent_coef)

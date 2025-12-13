@@ -120,4 +120,13 @@
     - [x] Update `benchmark_agent.py` to save equity curves to `results/equity.csv`.
     - [x] Add Notebook Cell: Plot Equity Curve (Agent vs Baseline).
 - [ ] **Tuning Visualization**
-    - [ ] (Optional) Visualize Optuna history if time permits.
+    - [x] (Optional) Visualize Optuna history if time permits.
+
+## Phase 10: Advanced Parameterization
+- [x] **Expose Hyperparameters**
+    - [x] Update `train_agent.py` to accept:
+        -   `lookback` (Window Size).
+        -   `ent_coef` (Exploration Rate).
+    - [x] Update CLI arguments.
+- [x] **Notebook Updates**
+    - [x] Update `alpha_fx_demo.ipynb` to explain and use these parameters.
