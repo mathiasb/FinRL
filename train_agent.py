@@ -53,7 +53,7 @@ def train(total_timesteps=30000, learning_rate=2.27e-5, batch_size=256, n_steps=
     model = PPO(
         "MlpPolicy", 
         env, 
-        verbose=1,
+        verbose=0, # Silent mode to avoid console spam
         learning_rate=learning_rate,
         n_steps=n_steps,
         batch_size=batch_size,
@@ -64,7 +64,7 @@ def train(total_timesteps=30000, learning_rate=2.27e-5, batch_size=256, n_steps=
     
     # 5. Train
     print(f"Training Agent for {total_timesteps} steps | LR={learning_rate} | Ent Coef={ent_coef} | Lookback={lookback} | Device={device}...")
-    model.learn(total_timesteps=total_timesteps) # Increased for larger n_steps
+    model.learn(total_timesteps=total_timesteps, progress_bar=True) # Show TQDM progress bar
     
     # 6. Save
     models_dir = "models" # Keep models_dir for consistency, though hardcoded path is used

@@ -135,3 +135,8 @@
 - [x] **Device Selection**
     - [x] Update `train_agent.py` to accept `device` argument ('auto', 'cuda', 'cpu', 'mps').
     - [x] Update `alpha_fx_demo.ipynb` to demonstrate GPU usage.
+
+## Phase 12: UX Improvements
+- [x] **Progress Indicators**
+    - [x] Update `train_agent.py` to use `progress_bar=True`.
+    - [x] Clean up console output (reduce verbosity).
