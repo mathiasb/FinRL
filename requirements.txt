@@ -56,3 +56,7 @@ wrds
 
 # market data & paper trading API
 yfinance
+
+# UI / Progress
+rich
+ipywidgets
