@@ -130,3 +130,8 @@
     - [x] Update CLI arguments.
 - [x] **Notebook Updates**
     - [x] Update `alpha_fx_demo.ipynb` to explain and use these parameters.
+
+## Phase 11: GPU Acceleration
+- [x] **Device Selection**
+    - [x] Update `train_agent.py` to accept `device` argument ('auto', 'cuda', 'cpu', 'mps').
+    - [x] Update `alpha_fx_demo.ipynb` to demonstrate GPU usage.

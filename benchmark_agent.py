@@ -5,7 +5,9 @@ from finrl.meta.env_fx_trading.env_fx_portfolio import FXPortfolioEnv
 import sys
 import os
 
-def run_benchmark():
+import argparse
+
+def run_benchmark(lookback=10):
     # 1. Load Data
     # 1. Load Data
     data_path = 'data/fx_data_2018_2023.parquet'
@@ -25,9 +27,10 @@ def run_benchmark():
     
     # 2. Setup Environment
     stock_dim = len(validation_df['tic'].unique())
-    lookback = 10
+    # lookback = 10 # NOW USING ARGUMENT
     tech_indicators = ['macd', 'rsi_30', 'cci_30', 'dx_30', 'boll_ub', 'boll_lb', 'atr', 'adx', 'wr', 'us_roi']
     state_space = stock_dim * lookback * len(tech_indicators)
+    print(f"Benchmark Env: Stock Dim: {stock_dim}, State Space: {state_space}, Lookback: {lookback}")
     
     env_kwargs = {
         "stock_dim": stock_dim,
@@ -158,4 +161,8 @@ def run_benchmark():
     print("Equity curve saved to results/equity.csv")
 
 if __name__ == "__main__":
-    run_benchmark()
+    parser = argparse.ArgumentParser(description='Run FX Agent Benchmark')
+    parser.add_argument('--lookback', type=int, default=10, help='Lookback window size (Must match training)')
+    args = parser.parse_args()
+    
+    run_benchmark(lookback=args.lookback)

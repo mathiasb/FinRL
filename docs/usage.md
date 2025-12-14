@@ -49,11 +49,16 @@ pip install -e .
 
 ### Quick Start (3-Step Workflow)
 Once setup is complete, the standard workflow is:
-### Quick Start (3-Step Workflow)
-Once setup is complete, the standard workflow is:
-1.  `python planning/run_pipeline.py` → Creates `data/fx_data_2018_2023.parquet`
-2.  `python train_agent.py` → Creates `models/fx_agent_tuned.zip`
-3.  `python backtest_agent.py` → Evaluates the agent
+1.  **Data Generation**: `python planning/run_pipeline.py --tickers "EURUSD=X" --start "2018-01-01"`
+2.  **Training**: `python train_agent.py --timesteps 50000 --lookback 30`
+3.  **Benchmarking**: `python benchmark_agent.py --lookback 30`
+
+### Interactive Demo (Recommended)
+For a visual and interactive experience, open the included Jupyter Notebook:
+```bash
+jupyter notebook alpha_fx_demo.ipynb
+```
+This notebook walks you through the entire pipeline with charts and explanations.
 
 ### Starting Fresh (Clean Slate)
 To remove all generated data and models and start from scratch:
@@ -93,16 +98,15 @@ graph LR
 *   **[Bollinger Bands](https://www.investopedia.com/terms/b/bollingerbands.asp)**: Upper (`boll_ub`) and Lower (`boll_lb`) bands.
     *   *Relevance*: a measure of volatility. Prices touching the bands often indicate a breakout or reversion.
 
-**Run the pipeline script:**
+**Using the CLI:**
 
 ```bash
-python planning/run_pipeline.py
+python planning/run_pipeline.py --tickers "EURUSD=X,GBPUSD=X" --start "2018-01-01" --end "2023-01-01"
 ```
 
-*   **Input**: Fetches data for `EURUSD=X`, `GBPUSD=X`, `JPY=X`, `SEK=X`, and `EURSEK=X`.
-    *   *To customize*: Edit `planning/run_pipeline.py` and modify the `TICKERS` list.
+*   `--tickers`: Comma-separated list of Yahoo Finance tickers.
+*   `--start`, `--end`: Date range for historical data.
 *   **Output**: Creates `data/fx_data_2018_2023.parquet`.
-    *   *Note*: If you change tickers or date ranges, you might want to rename this file in `planning/run_pipeline.py` to reflect the new content (e.g., `data/fx_majors_2023.parquet`).
 
 ## 3. Training the Agent
 
@@ -120,20 +124,23 @@ We use **PPO**, a popular on-policy gradient method.
 **Run the training script:**
 
 ```bash
-python train_agent.py
+python train_agent.py --timesteps 50000 --lookback 30 --ent-coef 0.01
 ```
 
 *   **Process**:
     *   Loads `data/fx_data_2018_2023.parquet`.
     *   Initializes the `FXPortfolioEnv` with transaction costs (0.1%).
-    *   Trains a PPO agent for 5,000 timesteps (default MVP setting).
+    *   Trains a PPO agent for the specified timesteps.
     *   Saves the trained model to `models/fx_agent_tuned.zip`.
+    *   **Logs**: Saves training progress to `results/monitor.csv` (for Plotting).
 
-**Configuration:**
-params in `train_agent.py` allow you to customize the run:
-*   `lookback`: Window size for technical indicators (Default: 10).
-*   `total_timesteps`: Duration of training (Default: 5,000). Increases this for better performance (e.g. 1M+ for production).
-*   `transaction_cost_pct`: Trading fee simulation (Default: 0.001 or 0.1%).
+**Customizable Parameters:**
+The script now supports several arguments to fine-tune performance:
+
+*   `--timesteps` (Default: 30000): Duration of training. Increase for better learning.
+*   `--lookback` (Default: 10): Window size for history. **Important**: Must match what is used in Benchmarking. Increasing to 30 or 60 helps capture longer trends.
+*   `--ent-coef` (Default: 0.00015): Entropy Coefficient. Controls exploration. Increase to 0.001 or 0.01 to encourage the agent to try new strategies.
+*   `--lr` (Default: 2.27e-5): Learning Rate.
 
 **Interpreting Training Output:**
 When the script runs, it logs metrics to the console. Key metrics to watch:
@@ -142,7 +149,7 @@ When the script runs, it logs metrics to the console. Key metrics to watch:
 *   `explained_variance`: How well the Value Function predicts returns. Values close to **1.0** are ideal. Low or negative values indicate the value function is struggling.
 *   `loss`: The PPO loss. This may fluctuate but shouldn't explode.
 
-*Tip: If `ep_rew_mean` is flat or negative, try adjusting hyperparameters or checking if your data contains valid signals.*
+*Tip: If `ep_rew_mean` is flat or negative, try adjusting hyperparameters (higher ent_coef) or checking if your data contains valid signals.*
 
 ## 4. Evaluation & Backtesting
 
@@ -182,13 +189,17 @@ python tune_agent.py
 Compare your trained agent against standard baselines.
 
 ```bash
-python benchmark_agent.py
+python benchmark_agent.py --lookback 30
 ```
 
 *   **Process**:
     *   Loads `models/fx_agent_tuned.zip`.
-    *   Runs the agent on validity data.
-    *   Simulates a "Buy & Hold" (Equal Weight) strategy on the same data.
+    *   Runs the validation loop on unseen data.
+    *   **Results**: Saves equity curve to `results/equity.csv`.
+
+*   **Arguments**:
+    *   `--lookback`: **CRITICAL**. Must match the lookback used during training (e.g., 30). If mismatched, you will see a dimension error.
+
 *   **Interpretation**:
     *   **Positive Alpha**: Agent Return > Baseline Return.
     *   **Sharpe Improvement**: Agent Sharpe > Baseline Sharpe.

@@ -8,7 +8,7 @@ from stable_baselines3.common.monitor import Monitor
 import os
 import argparse
 
-def train(total_timesteps=30000, learning_rate=2.27e-5, batch_size=256, n_steps=2048, lookback=10, ent_coef=0.00015):
+def train(total_timesteps=30000, learning_rate=2.27e-5, batch_size=256, n_steps=2048, lookback=10, ent_coef=0.00015, device='auto'):
     # Load Data
     df = pd.read_parquet('data/fx_data_2018_2023.parquet')
     # Reset index to ensure 'date' is a column
@@ -58,11 +58,12 @@ def train(total_timesteps=30000, learning_rate=2.27e-5, batch_size=256, n_steps=
         n_steps=n_steps,
         batch_size=batch_size,
         gamma=0.914,
-        ent_coef=ent_coef
+        ent_coef=ent_coef,
+        device=device
     )
     
     # 5. Train
-    print(f"Training Agent for {total_timesteps} steps | LR={learning_rate} | Ent Coef={ent_coef} | Lookback={lookback}...")
+    print(f"Training Agent for {total_timesteps} steps | LR={learning_rate} | Ent Coef={ent_coef} | Lookback={lookback} | Device={device}...")
     model.learn(total_timesteps=total_timesteps) # Increased for larger n_steps
     
     # 6. Save
@@ -78,7 +79,8 @@ if __name__ == "__main__":
     parser.add_argument('--lr', type=float, default=2.27e-5, help='Learning Rate')
     parser.add_argument('--lookback', type=int, default=10, help='Lookback window size')
     parser.add_argument('--ent-coef', type=float, default=0.00015, help='Entropy coefficient (Exploration)')
+    parser.add_argument('--device', type=str, default='auto', help='Device to run on (auto, cuda, cpu, mps)')
     
     args = parser.parse_args()
     
-    train(total_timesteps=args.timesteps, learning_rate=args.lr, lookback=args.lookback, ent_coef=args.ent_coef)
+    train(total_timesteps=args.timesteps, learning_rate=args.lr, lookback=args.lookback, ent_coef=args.ent_coef, device=args.device)
