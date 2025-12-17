@@ -140,3 +140,19 @@
 - [x] **Progress Indicators**
     - [x] Update `train_agent.py` to use `progress_bar=True`.
     - [x] Clean up console output (reduce verbosity).
+
+## Phase 13: Documentation & Explanations
+- [x] **Ticker Explanation**
+    - [x] Add currency pair details to `docs/usage.md`.
+    - [x] Add currency pair details to `alpha_fx_demo.ipynb`.
+
+## Phase 14: Interactive Visualization
+- [x] **Interactive Chart**
+    - [x] Create `interactive_plot.py` or similar logic.
+    - [x] Inject interactive cell into `alpha_fx_demo.ipynb`.
+
+## Phase 15: Visualization Refinement
+- [x] **Dual-Axis Consolidation**
+    - [x] Update plot logic to use `ax.twinx()` for secondary Y-axis.
+    - [x] Consolidate Price and Indicator onto a single chart.
+    - [x] Ensure clear legend for (L) and (R) axes.

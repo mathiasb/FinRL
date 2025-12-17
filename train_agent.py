@@ -20,7 +20,7 @@ def train(total_timesteps=30000, learning_rate=2.27e-5, batch_size=256, n_steps=
     
     # Configuration
     stock_dim = len(df['tic'].unique())
-    # lookback = 10 # NOW USING ARGUMENT
+
     tech_indicators = ['macd', 'rsi_30', 'cci_30', 'dx_30', 'boll_ub', 'boll_lb', 'atr', 'adx', 'wr', 'us_roi']
     
     # State space = stock_dim * lookback * n_features

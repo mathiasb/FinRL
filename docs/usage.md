@@ -5,12 +5,26 @@ This guide provides a step-by-step tutorial on how to use the Alpha-FX system, d
 ## FX Trading: A Primer for Non-Experts
 If you are new to Forex (Foreign Exchange) trading, here are the key concepts used in this project:
 
-### 1. What is a Ticker Pair?
-In FX, you trade pairs (e.g., `EURUSD`).
-*   **Base Currency**: `EUR` (Euro).
-*   **Quote Currency**: `USD` (US Dollar).
-*   **Price**: How much Quote Currency is needed to buy one unit of Base Currency.
-    *   *Example*: `EURUSD = 1.10` means 1 Euro costs 1.10 US Dollars.
+### 1. Understanding the Tickers (Financial Context)
+The agent trades a portfolio of 5 currency pairs. It is critical to understand "Who is pricing Whom" (Base vs. Quote) to interpret the agent's actions suitable for the US Dollar.
+
+**A. The "Anti-USD" Majors (Direct Quote)**
+*   **`EURUSD=X` (Euro / USD)** and **`GBPUSD=X` (British Pound / USD)**
+*   **Meaning**: How many USD you get for 1 EUR/GBP.
+*   **Correlation**: If these go **UP**, the USD is **WEAKENING**. Buying these means "Shorting USD".
+
+**B. The "USD-Base" Majors (Indirect Quote)**
+*   **`JPY=X` (USD / Japanese Yen)** and **`SEK=X` (USD / Swedish Krona)**
+*   **Meaning**: How many Yen/Kronor you get for 1 USD.
+*   **Correlation**: If these go **UP**, the USD is **STRENGTHENING**. Selling these means "Shorting USD".
+*   *Note*: Yahoo Finance denotes these with `=X` suffix. `JPY=X` is USDJPY, `SEK=X` is USDSEK.
+
+**C. The Cross-Rate**
+*   **`EURSEK=X` (Euro / Swedish Krona)**
+*   **Relationship**: $EURSEK \approx EURUSD \times USDSEK$.
+*   **Role**: Provides arbitrage signals. If the market price drifts from the synthetic price derived from the USD pairs, the agent can exploit the inefficiency.
+
+---
 
 ### 2. Actions (Weights)
 In our Reinforcement Learning environment, the agent outputs **Portfolio Weights** for each currency.
@@ -45,6 +59,12 @@ source .venv/bin/activate  # On Windows: .venv\Scripts\activate
 # Install dependencies
 pip install -r requirements.txt
 pip install -e .
+
+# If you are running the jupyter notebook you need ipykernel
+pip install ipykernel
+
+# Add the virtual environment to the jupyter kernel
+python -m ipykernel install --user --name .venv --display-name "Python (FinRL venv)"
 ```
 
 ### Quick Start (3-Step Workflow)
