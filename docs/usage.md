@@ -141,6 +141,35 @@ We use **PPO**, a popular on-policy gradient method.
 *   *Reference*: [OpenAI Spinning Up: PPO](https://spinningup.openai.com/en/latest/algorithms/ppo.html)
 *   *Deep Dive*: [Proximal Policy Optimization Algorithms (Schulman et al., 2017)](https://arxiv.org/abs/1707.06347)
 
+### 3.1 Understanding Training Concepts
+
+To effectively train and improve your agent, it's important to understand how its "world" is structured:
+
+*   **Timestamps**: Each `step()` in the environment represents one day (a single row in your Parquet file). Training for `30,000` timesteps means the agent processes 30,000 daily transitions.
+*   **Episodes**: One episode is a full pass from the start date to the end date of your dataset. The agent's goal is to maximize the cumulative reward over the entire episode.
+*   **Rewards (Risk-Adjusted Return)**: The agent isn't just looking for profit; it's looking for *stable* profit. The reward function penalizes volatility:
+    $$Reward = \text{Return} - (\text{Risk Aversion} \times \text{Volatility})$$
+    This encourages the agent to avoid "rollercoaster" equity curves.
+
+### 3.2 Performance Improvement Strategies
+
+If your agent isn't performing well (e.g., negative `ep_rew_mean` or poor Sharpe Ratio), consider these levers:
+
+#### A. Hyperparameter Optimization
+PPO is sensitive to its settings. Use `tune_agent.py` to optimize:
+*   **`ent_coef` (Entropy)**: If the agent quickly settles on a "do nothing" strategy, increase this (e.g., to `0.01`) to force more exploration.
+*   **`learning_rate`**: Start small (`1e-5` to `5e-5`). Financial data is noisy; a high learning rate can cause the model to "forget" good strategies.
+*   **`n_steps`**: Larger values (e.g., `2048`) allow the agent to see more context before updating its policy, which is often better for capturing medium-term FX trends.
+
+#### B. Feature Engineering
+The agent "sees" the market through technical indicators.
+*   **Lookback Window**: Increasing the `--lookback` (e.g., from 10 to 30) gives the agent more historical context, but makes the state space larger and harder to learn.
+*   **Data Quality**: Use `planning/run_pipeline.py` to ensure you have enough history (at least 3-5 years) for the agent to seen different market regimes.
+
+#### C. Reward Shaping
+*   **Transaction Costs**: If `transaction_cost_pct` is too high, the agent will learn that trading is too expensive and will stop taking positions. Ensure this matches your actual trading costs.
+*   **Scaling**: The `reward_scaling` parameter helps the agent perceive the magnitude of gains/losses. Values between `1e-4` and `1e-2` are typical for FX.
+
 **Run the training script:**
 
 ```bash
@@ -235,3 +264,9 @@ python benchmark_agent.py --lookback 30
 For developers contributing to the project, please refer to:
 *   [Development Workflow](development_workflow.md): TDD guidelines and CI/CD details.
 *   [System Architecture](system_architecture.md): Detailed UML diagrams of the system.
+
+## 9. Further Reading & References
+
+*   **[Stable Baselines3 Documentation](https://stable-baselines3.readthedocs.io/)**: For deep dives into PPO and other RL algorithms.
+*   **[FinRL Library](https://github.com/AI4Finance-Foundation/FinRL)**: The foundation this project is built upon.
+*   **[Gymnasium (OpenAI Gym)](https://gymnasium.farama.org/)**: Understanding the environment interface.
